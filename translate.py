@@ -3,7 +3,6 @@ from config import *
 import os
 import googletrans
 
-# TODO: find way to convert between full language name to google language code
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = KEY_PATH
 
@@ -30,9 +29,6 @@ def translate_text(text="YOUR_TEXT_TO_TRANSLATE", src_lang="en-US", targ_lang="j
         }
     )
 
-    # Display the translation for each input text provided
-    # for translation in response.translations:
-    # print("Translated text: {}".format(translation.translated_text))
     return response.translations[0].translated_text
 
 
@@ -54,14 +50,6 @@ def detect_language(text):
         mime_type="text/plain",  # mime types: text/plain, text/html
     )
 
-    # Display list of detected languages sorted by detection confidence.
-    # The most probable language is first.
-    # for language in response.languages:
-    #     # The language detected
-    #     print("Language code: {}".format(language.language_code))
-    #     # Confidence of detection result for this language
-    #     print("Confidence: {}".format(language.confidence))
-
     return response.languages[0].language_code
 
 
@@ -75,3 +63,8 @@ def get_supported_languages():
     all_languages = {v: k for k, v in googletrans.LANGUAGES.items()}
 
     return all_languages
+
+def get_language_code(language_name):
+    return get_supported_languages()[language_name.lower()]
+
+print(get_language_code(language_name="French"))

@@ -1,21 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My Chat App</title>
-</head>
-<body>
-<h1>My Chat App</h1>
-<h3>Hi {% if current_user.is_authenticated %}{{ current_user.username }}{% else %}Guest{% endif %}!</h3>
+<html>
 
-{% if current_user.is_authenticated %}
-    <h3>My rooms</h3>
-    <ul>
-        {% for room in rooms %}
-            <li><a href="/rooms/{{ room._id.room_id }}">{{ room.room_name }}</a></li>
-        {% endfor %}
+<head>
+    <title>Chat Room</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var socket = io.connect('http://127.0.0.1:5000');
+
+            // Listen for a certain event called connect
+            socket.on('connect', function () {
+                socket.send('User has connected!');
+            });
+
+            socket.on('message', function (msg) {
+                $("#messages").append('<li>' + msg + '</li>');
+                console.log('Received message');
+            });
+
+            $('#sendbutton').on('click', function () {
+                socket.send($('#myMessage').val());
+                $('#myMessage').val('');
+            });
+        });
+    </script>
+
+    <ul id="messages"></ul>
+    <input tpye="text" id="myMessage">
+    <button id="sendbutton">Send</button>
     </ul>
-{% endif %}
 </body>
+
 </html>
-© 2021 GitHub, Inc.

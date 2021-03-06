@@ -3,3 +3,5 @@ config.py
 __pycache__
 GlobalChat-5f6676885881.json
 .vscode
+templates\old
+tempCodeRunnerFile.py

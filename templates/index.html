@@ -1,40 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>My Chat App</title>
-    <link href="..\static\assets\dist\css\bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
 
 </head>
-<body>
 
+<body>
     <nav class="navbar navbar-light " style="background-color: #b19cd9 ;">
         <div class="container-fluid">
-          <a class="navbar-brand" href="#">
-            <img src="../static/assets/img/Logo.png" alt="" width="30" height="24" class="d-inline-block align-top">
-            GlobalChat
-          </a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-            <div class="navbar-nav">
-              <a class="nav-link active" aria-current="page" href="/logout">Logout</a>
+            <a class="navbar-brand" href="/">
+                <img src="../static/assets/img/Logo.png.png" alt="" width="30" height="24"
+                    class="d-inline-block align-top">
+                GlobalChat
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
+                aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="navbar-nav">
+                    <a class="nav-link active" aria-current="page" href="/logout">Logout</a>
+                </div>
             </div>
-          </div>
         </div>
-      </nav>
+    </nav>
 
     <div class="list-container">
         <h2>Your Rooms</h2>
         <ul class="list-group">
             {% for room in rooms %}
-                <li class="list-group-item item"><a class="item-text" href="/rooms/{{ room._id.room_id }}"><b>{{ room.room_name }}</b></a></li>
+            <li class="list-group-item item"><a class="item-text" href="/rooms/{{ room._id.room_id }}"><b>{{
+                        room.room_name }}</b></a></li>
             {% endfor %}
         </ul>
         <form method="post">
-            <button class="btn btn-primary" href="/create-room" id="create-room-button" type="submit" name="create_room_button" value="create_room_button">Create Room</button>
-    
+            <button class="btn btn-primary" href="/create-room" id="create-room-button" type="submit"
+                name="create_room_button" value="create_room_button">Create Room</button>
+
         </form>
     </div>
 
@@ -47,6 +52,7 @@
             margin-left: auto;
             margin-right: auto;
         }
+
         .list-container {
             display: block;
             overflow: auto;
@@ -54,17 +60,22 @@
             height: 500px;
             width: 500px;
         }
-        .item:hover{
+
+        .item:hover {
             background-color: #D3D3D3;
         }
+
         .item-text {
-            text-decoration: none; 
+            text-decoration: none;
             color: black;
             margin-left: auto;
             margin-right: auto;
             text-align: center;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
+        crossorigin="anonymous"></script>
 </body>
+
 </html>

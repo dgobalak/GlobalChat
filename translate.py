@@ -67,3 +67,8 @@ def get_supported_languages():
 def get_language_code(language_name):
     return get_supported_languages()[language_name.lower()]
 
+def get_language_name(code):
+    all_languages = {k: v for k, v in googletrans.LANGUAGES.items()}
+    return all_languages[code]
+
+

@@ -6,8 +6,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from flask_socketio import SocketIO, join_room, leave_room
 from pymongo.errors import DuplicateKeyError
 from translate import *
-from db import get_user, save_user, save_room, add_room_members, get_rooms_for_user, get_room, is_room_member, \
-    get_room_members, is_room_admin, update_room, remove_room_members, save_message, get_messages
+from db import *
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -17,11 +16,18 @@ login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
     rooms = []
     if current_user.is_authenticated:
         rooms = get_rooms_for_user(current_user.username)
+        if request.method == 'POST':
+            if request.form["create_room_button"] == "create_room_button":
+                return redirect(url_for('create_room'))
+    else:
+        if request.method == 'POST':
+            if request.form["goto_login_button"] == "goto_login_button":
+                return redirect(url_for('login'))
     return render_template("index.html", rooms=rooms)
 
 
@@ -41,7 +47,7 @@ def login():
             return redirect(url_for('home'))
         else:
             message = 'Failed to login!'
-    return render_template('login.html', message=message)
+    return render_template('signin.html', message=message)
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -54,8 +60,9 @@ def signup():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
+        language = request.form.get('lang')
         try:
-            save_user(username, email, password)
+            save_user(username, email, password, language)
             return redirect(url_for('login'))
         except DuplicateKeyError:
             message = "User already exists!"
@@ -75,13 +82,15 @@ def create_room():
     message = ''
     if request.method == 'POST':
         room_name = request.form.get('room_name')
-        usernames = [username.strip() for username in request.form.get('members').split(',')]
+        usernames = [username.strip()
+                                    for username in request.form.get('members').split(',')]
 
         if len(room_name) and len(usernames):
             room_id = save_room(room_name, current_user.username)
             if current_user.username in usernames:
                 usernames.remove(current_user.username)
-            add_room_members(room_id, room_name, usernames, current_user.username)
+            add_room_members(room_id, room_name, usernames,
+                             current_user.username)
             return redirect(url_for('view_room', room_id=room_id))
         else:
             message = "Failed to create room"
@@ -93,7 +102,8 @@ def create_room():
 def edit_room(room_id):
     room = get_room(room_id)
     if room and is_room_admin(room_id, current_user.username):
-        existing_room_members = [member['_id']['username'] for member in get_room_members(room_id)]
+        existing_room_members = [member['_id']['username']
+            for member in get_room_members(room_id)]
         room_members_str = ",".join(existing_room_members)
         message = ''
         if request.method == 'POST':
@@ -101,11 +111,15 @@ def edit_room(room_id):
             room['name'] = room_name
             update_room(room_id, room_name)
 
-            new_members = [username.strip() for username in request.form.get('members').split(',')]
-            members_to_add = list(set(new_members) - set(existing_room_members))
-            members_to_remove = list(set(existing_room_members) - set(new_members))
+            new_members = [username.strip()
+                                          for username in request.form.get('members').split(',')]
+            members_to_add = list(
+                set(new_members) - set(existing_room_members))
+            members_to_remove = list(
+                set(existing_room_members) - set(new_members))
             if len(members_to_add):
-                add_room_members(room_id, room_name, members_to_add, current_user.username)
+                add_room_members(room_id, room_name,
+                                 members_to_add, current_user.username)
             if len(members_to_remove):
                 remove_room_members(room_id, members_to_remove)
             message = 'Room edited successfully'
@@ -121,7 +135,7 @@ def view_room(room_id):
     room = get_room(room_id)
     if room and is_room_member(room_id, current_user.username):
         room_members = get_room_members(room_id)
-        messages = get_messages(room_id)
+        messages = get_messages(room_id, current_user.username)
         return render_template('view_room.html', username=current_user.username, room=room, room_members=room_members,
                                messages=messages)
     else:
@@ -150,23 +164,36 @@ def handle_send_message_event(data):
     app.logger.info("{} has sent message to the room {}: {}".format(data['username'],
                                                                     data['room'],
                                                                     data['message']))
-    data['message'] = get_translated_text(data['message'], 'fr')
+    save_message(data['room'], data['message'], data['username'])
+
+    name1, name2 = [x['_id']['username'] for x in get_room_members(data['room'])]
+    print(name1, name2)
+    user_lang1, user_lang2 = get_user(name1).get_lang().lower(), get_user(name2).get_lang().lower()
+    print(user_lang1, user_lang2)
+    target_lang = user_lang2 if name1 == data['username'] else user_lang1
+    if get_language_name(detect_language(data['message']).lower()) != target_lang:
+        print(get_language_name(detect_language(data['message']).lower()))
+        print(get_user(data['username']).get_lang().lower())
+        print(target_lang)
+        data['message'] = get_translated_text(data['message'], get_language_code(target_lang))
+
     data['created_at'] = datetime.now().strftime("%d %b, %H:%M")
     print(data)
-    save_message(data['room'], data['message'], data['username'])
     socketio.emit('receive_message', data, room=data['room'])
 
 
 @socketio.on('join_room')
 def handle_join_room_event(data):
-    app.logger.info("{} has joined the room {}".format(data['username'], data['room']))
+    app.logger.info("{} has joined the room {}".format(
+        data['username'], data['room']))
     join_room(data['room'])
     socketio.emit('join_room_announcement', data, room=data['room'])
 
 
 @socketio.on('leave_room')
 def handle_leave_room_event(data):
-    app.logger.info("{} has left the room {}".format(data['username'], data['room']))
+    app.logger.info("{} has left the room {}".format(
+        data['username'], data['room']))
     leave_room(data['room'])
     socketio.emit('leave_room_announcement', data, room=data['room'])
 

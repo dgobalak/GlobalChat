@@ -26,6 +26,9 @@
         <li>{{ member._id.username }}</li>
     {% endfor %}
 </ul>
+<button>Edit Room</button>
+<button>Leave Room</button>
+
 
 
 </body>
@@ -50,9 +53,14 @@
                     room: "{{ room._id }}",
                     message: message
                 })
+                const newNode = document.createElement('div');
+                newNode.innerHTML = `<b>{{username}}&nbsp;[${"created_at"}]:&nbsp;</b> ${message}`;
+                document.getElementById('messages').appendChild(newNode);
             }
             message_input.value = '';
             message_input.focus();
+
+           
         }
     });
 
@@ -91,6 +99,20 @@
         const newNode = document.createElement('div');
         newNode.innerHTML = `<b>${data.username}&nbsp;[${data.created_at}]:&nbsp;</b> ${data.message}`;
         document.getElementById('messages').appendChild(newNode);
+
+        str = String(document.getElementById('messages').lastChild.previousElementSibling.innerHTML);
+        console.log(str.slice(3, str.indexOf('&')).trim());
+        let name = str.slice(3, str.indexOf('&')).trim();
+        if (data.username == name) {
+            document.getElementById('messages').removeChild(document.getElementById('messages').lastChild);
+        }
+        // document.getElementById('messages').removeChild(document.getElementById('messages').lastChild);
+        // l
+        // location.reload()
+        // if (document.getElementById('messages').lastChild.previousElementSibling). {
+// <b>daniel&nbsp;[created_at]:&nbsp;</b> Hello
+        
+
     });
 
     socket.on('join_room_announcement', function (data) {

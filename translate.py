@@ -45,7 +45,7 @@ def detect_language(text):
     # Detail on supported types can be found here:
     # https://cloud.google.com/translate/docs/supported-formats
     response = client.detect_language(
-        content="Hello World",
+        content=text,
         parent=parent,
         mime_type="text/plain",  # mime types: text/plain, text/html
     )

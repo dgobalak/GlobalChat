@@ -54,8 +54,10 @@ def detect_language(text):
 
 
 def get_translated_text(text, targ_lang):
-    return translate_text(text, detect_language(text), targ_lang)
-
+    src_lang = detect_language(text)
+    if src_lang != targ_lang:
+        return translate_text(text, detect_language(text), targ_lang)
+    return text
 
 def get_supported_languages():
     """Getting a list of supported language codes."""

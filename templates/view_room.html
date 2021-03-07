@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>My Chat App</title>
+    <link href="..\static\assets\dist\css\bootstrap.min.css" rel="stylesheet">
+    <link href="..static\css\view_room.css" rel="stylesheet">
+    
 </head>
 <body>
 <h1>Welcome to chat room: {{ room.name }}</h1>
 
 
-<button type="button" id="load_older_messages_btn">Load Older Messages</button>
+<!-- <button type="button" id="load_older_messages_btn">Load Older Messages</button> -->
 <div id="messages">
     {% for message in messages %}
-        <div><b>{{ message.sender }}&nbsp;[{{ message.created_at }}]:&nbsp;</b> {{ message.text }}</div>
+        <div class="container"><b>{{ message.sender }}</b> {{ message.text }}</div>
     {% endfor %}
 </div>
 
@@ -26,8 +29,11 @@
         <li>{{ member._id.username }}</li>
     {% endfor %}
 </ul>
-<button>Edit Room</button>
-<button>Leave Room</button>
+<form method="post">
+    <button name="goto_edit_room_button" value="goto_edit_room_button">Edit Room</button>
+    <button name="leave_room_button" value="leave_room_button">Leave Room</button>
+</form>
+
 
 
 
@@ -54,7 +60,7 @@
                     message: message
                 })
                 const newNode = document.createElement('div');
-                newNode.innerHTML = `<b>{{username}}&nbsp;[${"created_at"}]:&nbsp;</b> ${message}`;
+                newNode.innerHTML = `<b>{{username}}&nbsp;</b> ${message}`;
                 document.getElementById('messages').appendChild(newNode);
             }
             message_input.value = '';
@@ -66,23 +72,23 @@
 
     let page = 0;
 
-    document.getElementById("load_older_messages_btn").onclick = (e) => {
-        page += 1;
-        fetch("/rooms/{{ room._id }}/messages?page=" + page, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(response => {
-            response.json().then(messages => {
-                messages.reverse().forEach(message => prepend_message(message.text, message.sender, message.created_at));
-            })
-        })
-    };
+    // document.getElementById("load_older_messages_btn").onclick = (e) => {
+    //     page += 1;
+    //     fetch("/rooms/{{ room._id }}/messages?page=" + page, {
+    //         method: 'GET',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         }
+    //     }).then(response => {
+    //         response.json().then(messages => {
+    //             messages.reverse().forEach(message => prepend_message(message.text, message.sender, message.created_at));
+    //         })
+    //     })
+    // };
 
     function prepend_message(message, username, created_at) {
         const newNode = document.createElement('div');
-        newNode.innerHTML = `<b>${username}&nbsp;[${created_at}]:&nbsp;</b> ${message}`;
+        newNode.innerHTML = `<b>${username}&nbsp;</b> ${message}`;
         const messages_div = document.getElementById('messages');
         messages_div.insertBefore(newNode, messages_div.firstChild);
     }
@@ -97,7 +103,8 @@
     socket.on('receive_message', function (data) {
         console.log(data);
         const newNode = document.createElement('div');
-        newNode.innerHTML = `<b>${data.username}&nbsp;[${data.created_at}]:&nbsp;</b> ${data.message}`;
+        newNode.className = 'container'
+        newNode.innerHTML = `<b>${data.username}&nbsp;</b> ${data.message}`;
         document.getElementById('messages').appendChild(newNode);
 
         str = String(document.getElementById('messages').lastChild.previousElementSibling.innerHTML);

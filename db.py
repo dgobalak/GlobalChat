@@ -81,22 +81,24 @@ def save_message(room_id, text, sender):
     messages_collection.insert_one({'room_id': room_id, 'text': text, 'sender': sender, 'created_at': datetime.now()})
 
 
-MESSAGE_FETCH_LIMIT = 3
-
+def join_public_rooms():
+    rooms = list(rooms_collection.find({'privacy': 'public'}))
+    return rooms
 
 def get_messages(room_id, user_id, page=0):
-    offset = page * MESSAGE_FETCH_LIMIT
-    messages = list(
-        messages_collection.find({'room_id': room_id}).sort('_id', DESCENDING).limit(MESSAGE_FETCH_LIMIT).skip(offset))
-    name1, name2 = [x['_id']['username'] for x in get_room_members(room_id)]
-    user_lang1, user_lang2 = get_user(name1).get_lang(), get_user(name2).get_lang()
-    for message in messages:
-        if user_lang1 != user_lang2:
-            if message['sender'] == name1:
-                message['text'] = get_translated_text(message['text'], get_language_code(user_lang2))
-            else:
-                message['text'] = get_translated_text(message['text'], get_language_code(user_lang1))
-        message['created_at'] = message['created_at'].strftime("%d %b, %H:%M")
-        print(message)
+    # offset = page * MESSAGE_FETCH_LIMIT
+    # messages = list(
+    #     messages_collection.find({'room_id': room_id}).sort('_id', DESCENDING).limit(MESSAGE_FETCH_LIMIT).skip(offset))
+    messages = list(messages_collection.find({'room_id': room_id}).sort('_id', DESCENDING))
+    # name1, name2 = [x['_id']['username'] for x in get_room_members(room_id)]
+    # user_lang1, user_lang2 = get_user(name1).get_lang(), get_user(name2).get_lang()
+    # for message in messages:
+    #     if user_lang1 != user_lang2:
+    #         if message['sender'] == name1:
+    #             message['text'] = get_translated_text(message['text'], get_language_code(user_lang2))
+    #         else:
+    #             message['text'] = get_translated_text(message['text'], get_language_code(user_lang1))
+    #     message['created_at'] = message['created_at'].strftime("%d %b, %H:%M")
+    #     print(message)
 
     return messages[::-1]

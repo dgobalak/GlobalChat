@@ -25,9 +25,10 @@ def home():
             if request.form["create_room_button"] == "create_room_button":
                 return redirect(url_for('create_room'))
     else:
-        if request.method == 'POST':
-            if request.form["goto_login_button"] == "goto_login_button":
-                return redirect(url_for('login'))
+        # if request.method == 'POST':
+        #     if request.form["goto_login_button"] == "goto_login_button":
+        #         return redirect(url_for('login'))
+        return redirect(url_for('login'))
     return render_template("index.html", rooms=rooms)
 
 
@@ -84,7 +85,6 @@ def create_room():
         room_name = request.form.get('room_name')
         usernames = [username.strip()
                                     for username in request.form.get('members').split(',')]
-
         if len(room_name) and len(usernames):
             room_id = save_room(room_name, current_user.username)
             if current_user.username in usernames:
@@ -107,35 +107,58 @@ def edit_room(room_id):
         room_members_str = ",".join(existing_room_members)
         message = ''
         if request.method == 'POST':
-            room_name = request.form.get('room_name')
-            room['name'] = room_name
-            update_room(room_id, room_name)
+            if request.form.get("submit-edit-button"):
+                room_name = request.form.get('room_name')
+                room['name'] = room_name
+                update_room(room_id, room_name)
 
-            new_members = [username.strip()
-                                          for username in request.form.get('members').split(',')]
-            members_to_add = list(
-                set(new_members) - set(existing_room_members))
-            members_to_remove = list(
-                set(existing_room_members) - set(new_members))
-            if len(members_to_add):
-                add_room_members(room_id, room_name,
-                                 members_to_add, current_user.username)
-            if len(members_to_remove):
-                remove_room_members(room_id, members_to_remove)
-            message = 'Room edited successfully'
-            room_members_str = ",".join(new_members)
+                new_members = [username.strip()
+                                            for username in request.form.get('members').split(',')]
+                members_to_add = list(
+                    set(new_members) - set(existing_room_members))
+                members_to_remove = list(
+                    set(existing_room_members) - set(new_members))
+                if len(members_to_add):
+                    add_room_members(room_id, room_name,
+                                    members_to_add, current_user.username)
+                if len(members_to_remove):
+                    remove_room_members(room_id, members_to_remove)
+                message = 'Room edited successfully'
+                room_members_str = ",".join(new_members)
+                return redirect(url_for('view_room', room_id=room_id))
+            if request.form.get("exit_edit_button"):
+                return redirect(url_for('view_room', room_id=room_id))
         return render_template('edit_room.html', room=room, room_members_str=room_members_str, message=message)
     else:
         return "Room not found", 404
 
 
-@app.route('/rooms/<room_id>/')
+@app.route('/rooms/<room_id>/', methods=['GET', 'POST'])
 @login_required
 def view_room(room_id):
     room = get_room(room_id)
     if room and is_room_member(room_id, current_user.username):
+        if request.method == 'POST':
+            if request.form.get("leave_room_button"):
+                return redirect(url_for('home'))
+            elif request.form.get("goto_edit_room_button"):
+                return redirect(url_for("edit_room", room_id=room_id))
+
+
         room_members = get_room_members(room_id)
         messages = get_messages(room_id, current_user.username)
+
+        name1, name2 = [x['_id']['username'] for x in get_room_members(room_id)]
+        user_lang1, user_lang2 = get_user(name1).get_lang(), get_user(name2).get_lang()
+        for message in messages:
+            if user_lang1 != user_lang2:
+                message['text'] = get_translated_text(message['text'], get_language_code(get_user(current_user.username).get_lang()))
+                # if message['sender'] == name1:
+                    
+                #     message['text'] = get_translated_text(message['text'], get_language_code(user_lang2))
+                # else:
+                #     message['text'] = get_translated_text(message['text'], get_language_code(user_lang1))
+
         return render_template('view_room.html', username=current_user.username, room=room, room_members=room_members,
                                messages=messages)
     else:
@@ -167,18 +190,13 @@ def handle_send_message_event(data):
     save_message(data['room'], data['message'], data['username'])
 
     name1, name2 = [x['_id']['username'] for x in get_room_members(data['room'])]
-    print(name1, name2)
     user_lang1, user_lang2 = get_user(name1).get_lang().lower(), get_user(name2).get_lang().lower()
-    print(user_lang1, user_lang2)
     target_lang = user_lang2 if name1 == data['username'] else user_lang1
     if get_language_name(detect_language(data['message']).lower()) != target_lang:
-        print(get_language_name(detect_language(data['message']).lower()))
-        print(get_user(data['username']).get_lang().lower())
-        print(target_lang)
+
         data['message'] = get_translated_text(data['message'], get_language_code(target_lang))
 
     data['created_at'] = datetime.now().strftime("%d %b, %H:%M")
-    print(data)
     socketio.emit('receive_message', data, room=data['room'])
 
 
